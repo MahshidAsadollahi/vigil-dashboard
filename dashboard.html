@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vigil Marketing Tracker</title>
+<style>
+:root{
+  color-scheme: light;
+  --surface-0:#f4f3f0; --surface-1:#fcfcfb; --surface-2:#ffffff;
+  --border:#e2e1dc; --border-strong:#c9c8c2;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7b7a75;
+  --series-1:#2a78d6; --series-2:#eb6834;
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --grid:#eceae5;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --surface-0:#111110; --surface-1:#1a1a19; --surface-2:#222221;
+  --border:#33332f; --border-strong:#4a4a45;
+  --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8e8d84;
+  --series-1:#3987e5; --series-2:#d95926;
+  --grid:#2a2a27;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--surface-0); color:var(--text-primary);
+  font:14px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 64px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+h1{font-size:21px;font-weight:650;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--text-secondary);font-size:13px;margin:0}
+.hbtns{display:flex;gap:8px}
+button.ghost{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);
+  border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;
+}
+button.ghost:hover{border-color:var(--border-strong);color:var(--text-primary)}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.tile{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.tile .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px}
+.tile .num{font-size:27px;font-weight:640;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .note{font-size:12px;color:var(--text-secondary);margin-top:3px}
+.tile.alert .num{color:var(--critical)}
+
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:18px 18px 14px;margin-bottom:18px}
+.card h2{font-size:14px;font-weight:620;margin:0 0 2px}
+.card .cap{font-size:12px;color:var(--text-secondary);margin:0 0 14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+.legend{display:flex;gap:16px;align-items:center;font-size:12px;color:var(--text-secondary);margin-bottom:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+svg{display:block;width:100%;overflow:visible}
+.gridline{stroke:var(--grid);stroke-width:1}
+.axis{fill:var(--text-muted);font-size:11px}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);
+  padding:8px 12px;font:inherit;font-size:13px;cursor:pointer;margin-bottom:-1px}
+.tab.on{color:var(--text-primary);border-bottom-color:var(--series-1);font-weight:600}
+
+.ctrls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+input[type=search],select{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text-primary);
+  border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;
+}
+input[type=search]{min-width:230px}
+.count{margin-left:auto;font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+
+.tbl-scroll{overflow:auto;max-height:600px;border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text-muted);background:var(--surface-2);padding:9px 12px;
+  border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;position:sticky;top:0;
+}
+th:hover{color:var(--text-primary)}
+th .ar{opacity:.35;margin-left:4px}
+th.sorted .ar{opacity:1;color:var(--series-1)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td a{color:var(--text-primary);text-decoration:none;border-bottom:1px solid var(--border-strong)}
+td a:hover{color:var(--series-1);border-bottom-color:var(--series-1)}
+.nowrap{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text-secondary)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;
+  border:1px solid var(--border-strong);color:var(--text-secondary);white-space:nowrap}
+.pill.own{background:var(--series-1);border-color:var(--series-1);color:#fff}
+.muted{color:var(--text-muted)}
+
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.col{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px;min-height:110px}
+.col h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);
+  margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.col h3 b{font-size:16px;color:var(--text-primary);font-variant-numeric:tabular-nums}
+.lead{background:var(--surface-1);border:1px solid var(--border);border-radius:8px;padding:9px 10px;margin-bottom:8px}
+.lead .n{font-weight:600;font-size:13px}
+.lead .c{font-size:12px;color:var(--text-secondary)}
+.lead select{margin-top:7px;width:100%;font-size:12px;padding:4px 6px}
+
+.empty{text-align:center;padding:28px 16px;color:var(--text-muted);font-size:13px}
+.err{background:#fdecea;border:1px solid var(--critical);color:#7c1d1a;padding:14px 16px;
+  border-radius:10px;font-size:13px;margin-bottom:18px}
+:root[data-theme="dark"] .err{background:#2c1512;color:#f5b5b1}
+.tt{position:fixed;pointer-events:none;background:var(--surface-2);border:1px solid var(--border-strong);
+  border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.14);
+  opacity:0;transition:opacity .1s;z-index:50;white-space:nowrap}
+.tt b{font-variant-numeric:tabular-nums}
+footer{color:var(--text-muted);font-size:12px;text-align:center;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Vigil Marketing Tracker</h1>
+      <p class="sub">Competitor content, your content, leads and demos &mdash; live from Supabase.</p>
+    </div>
+    <div class="hbtns">
+      <button class="ghost" id="theme">Dark</button>
+      <button class="ghost" id="reload">Refresh</button>
+    </div>
+  </header>
+
+  <div id="err"></div>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Publishing cadence over time</h2>
+      <p class="cap">Posts per month. You versus every tracked competitor combined.</p>
+      <div class="legend">
+        <span><i style="background:var(--series-1)"></i>Vigil / Samaritan</span>
+        <span><i style="background:var(--series-2)"></i>All competitors</span>
+      </div>
+      <svg id="trend" height="230" role="img" aria-label="Monthly publishing volume"></svg>
+    </div>
+    <div class="card">
+      <h2>Last 90 days, by publisher</h2>
+      <p class="cap">Who is actually shipping. Your bar is highlighted.</p>
+      <svg id="cadence" height="230" role="img" aria-label="Posts in the last 90 days by publisher"></svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" data-tab="content">Content</button>
+      <button class="tab" data-tab="leads">Leads</button>
+      <button class="tab" data-tab="demos">Demos &amp; signups</button>
+    </div>
+
+    <div id="pane-content">
+      <div class="ctrls">
+        <input type="search" id="q" placeholder="Search titles&hellip;">
+        <select id="fOrg"><option value="">All publishers</option></select>
+        <select id="fSide">
+          <option value="">Everyone</option>
+          <option value="own">Just us</option>
+          <option value="comp">Just competitors</option>
+        </select>
+        <select id="fWin">
+          <option value="0">All time</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 12 months</option>
+        </select>
+        <span class="count" id="cCount"></span>
+      </div>
+      <div class="tbl-scroll"><table id="tContent">
+        <thead><tr>
+          <th data-k="published_at">Date<span class="ar">&#9660;</span></th>
+          <th data-k="org">Publisher<span class="ar">&#9660;</span></th>
+          <th data-k="title">Title<span class="ar">&#9660;</span></th>
+          <th data-k="topic">Topic<span class="ar">&#9660;</span></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="pane-leads" hidden>
+      <div class="board" id="board"></div>
+      <div class="ctrls" style="margin-top:18px">
+        <input type="search" id="lq" placeholder="Search leads&hellip;">
+        <span class="count" id="lCount"></span>
+      </div>
+      <div class="tbl-scroll"><table id="tLeads">
+        <thead><tr>
+          <th data-k="name">Name<span class="ar">&#9660;</span></th>
+          <th data-k="title">Title<span class="ar">&#9660;</span></th>
+          <th data-k="company">Company<span class="ar">&#9660;</span></th>
+          <th data-k="segment">Segment<span class="ar">&#9660;</span></th>
+          <th data-k="status">Status<span class="ar">&#9660;</span></th>
+          <th data-k="last_touch_at">Last touch<span class="ar">&#9660;</span></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="pane-demos" hidden>
+      <div class="ctrls"><span class="count" id="dCount"></span></div>
+      <div class="tbl-scroll"><table id="tDemos">
+        <thead><tr>
+          <th data-k="requested_at">Requested<span class="ar">&#9660;</span></th>
+          <th data-k="contact_name">Contact<span class="ar">&#9660;</span></th>
+          <th data-k="company">Company<span class="ar">&#9660;</span></th>
+          <th data-k="kind">Type<span class="ar">&#9660;</span></th>
+          <th data-k="channel">Channel<span class="ar">&#9660;</span></th>
+          <th data-k="status">Status<span class="ar">&#9660;</span></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+<div class="tt" id="tt"></div>
+
+<script>
+const SUPABASE_URL = "https://sgnxjasayfbmvzidloya.supabase.co";
+const SUPABASE_ANON = "sb_publishable_ri8ZY7cIUFk_RA8H2xdcNg_7uHr7CvR";
+
+const $ = s => document.querySelector(s);
+const tt = $("#tt");
+const S = { content: [], leads: [], demos: [] };
+const LEAD_STATUSES = ["new","contacted","replied","demo_booked","demo_done","won","lost"];
+const LABEL = {new:"New",contacted:"Contacted",replied:"Replied",demo_booked:"Demo booked",
+  demo_done:"Demo done",won:"Won",lost:"Lost",disqualified:"Disqualified"};
+
+async function api(path, opts){
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, Object.assign({
+    headers:{ apikey:SUPABASE_ANON, Authorization:"Bearer "+SUPABASE_ANON,
+              "Content-Type":"application/json", Prefer:"return=representation" }
+  }, opts||{}));
+  if(!r.ok) throw new Error(path.split("?")[0] + ": " + r.status + " " + (await r.text()).slice(0,180));
+  return r.status === 204 ? null : r.json();
+}
+const days = d => d ? Math.floor((Date.now() - new Date(d+"T00:00:00Z")) / 864e5) : null;
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+async function load(){
+  $("#err").innerHTML = "";
+  try{
+    const [c,l,d] = await Promise.all([
+      api("content_items?select=org,is_own,title,url,published_at,topic&order=published_at.desc.nullslast&limit=2000"),
+      api("leads?select=id,name,title,company,segment,status,priority,last_touch_at,next_step&order=updated_at.desc&limit=2000"),
+      api("demos?select=id,contact_name,company,kind,channel,requested_at,status,outcome&order=requested_at.desc&limit=2000")
+    ]);
+    S.content=c; S.leads=l; S.demos=d;
+    renderAll();
+  }catch(e){
+    $("#err").innerHTML = '<div class="err"><b>Could not reach the database.</b><br>'+esc(e.message)+'</div>';
+  }
+}
+
+function renderAll(){ tiles(); trend(); cadence(); contentTable(); board(); leadsTable(); demosTable();
+  $("#foot").textContent = "Loaded " + new Date().toLocaleString(); }
+
+function tiles(){
+  const own = S.content.filter(r=>r.is_own), comp = S.content.filter(r=>!r.is_own);
+  const lastOwn = own.map(r=>r.published_at).filter(Boolean).sort().pop();
+  const gap = days(lastOwn);
+  const c90 = comp.filter(r=>r.published_at && days(r.published_at)<=90).length;
+  const o90 = own.filter(r=>r.published_at && days(r.published_at)<=90).length;
+  const booked = S.leads.filter(r=>r.status==="demo_booked").length;
+  const active = S.leads.filter(r=>["contacted","replied"].includes(r.status)).length;
+  const t = [
+    ["Tracked items", S.content.length, comp.length+" competitor / "+own.length+" ours", false],
+    ["Days since we published", gap==null?"&mdash;":gap, lastOwn?("last: "+lastOwn):"nothing dated", gap!=null&&gap>30],
+    ["Ours, last 90d", o90, "competitors: "+c90, false],
+    ["Leads in flight", active, S.leads.length+" total", false],
+    ["Demos booked", booked, S.demos.length+" demo records", false]
+  ];
+  $("#tiles").innerHTML = t.map(([l,n,s,a])=>
+    '<div class="tile'+(a?" alert":"")+'"><div class="lab">'+l+'</div><div class="num">'+n+
+    '</div><div class="note">'+s+'</div></div>').join("");
+}
+
+function months(n){
+  const out=[], d=new Date(); d.setUTCDate(1);
+  for(let i=n-1;i>=0;i--){ const m=new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth()-i, 1));
+    out.push(m.toISOString().slice(0,7)); }
+  return out;
+}
+
+function trend(){
+  const svg=$("#trend"), W=svg.clientWidth||560, H=230, P={t:12,r:12,b:28,l:34};
+  const ms=months(14);
+  const own={}, comp={};
+  S.content.forEach(r=>{ if(!r.published_at) return; const k=r.published_at.slice(0,7);
+    if(!ms.includes(k)) return; (r.is_own?own:comp)[k]=((r.is_own?own:comp)[k]||0)+1; });
+  const max=Math.max(4,...ms.map(m=>Math.max(own[m]||0,comp[m]||0)));
+  const iw=W-P.l-P.r, ih=H-P.t-P.b;
+  const x=i=> P.l + (ms.length<2?iw/2:(i/(ms.length-1))*iw);
+  const y=v=> P.t + ih - (v/max)*ih;
+  let g="";
+  for(let i=0;i<=4;i++){ const v=Math.round(max*i/4), yy=y(v);
+    g+='<line class="gridline" x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+yy+'" y2="'+yy+'"/>'
+      +'<text class="axis" x="'+(P.l-8)+'" y="'+(yy+4)+'" text-anchor="end">'+v+'</text>'; }
+  ms.forEach((m,i)=>{ if(i%3===0||i===ms.length-1)
+    g+='<text class="axis" x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle">'+m.slice(2).replace("-","/")+'</text>'; });
+  const path=o=>ms.map((m,i)=>(i?"L":"M")+x(i)+" "+y(o[m]||0)).join(" ");
+  g+='<path d="'+path(comp)+'" fill="none" stroke="var(--series-2)" stroke-width="2" stroke-linejoin="round"/>';
+  g+='<path d="'+path(own)+'" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round"/>';
+  ms.forEach((m,i)=>{
+    g+='<circle cx="'+x(i)+'" cy="'+y(comp[m]||0)+'" r="3.5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/>';
+    g+='<circle cx="'+x(i)+'" cy="'+y(own[m]||0)+'" r="3.5" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/>';
+    g+='<rect x="'+(x(i)-14)+'" y="'+P.t+'" width="28" height="'+ih+'" fill="transparent" '
+      +'data-m="'+m+'" data-o="'+(own[m]||0)+'" data-c="'+(comp[m]||0)+'"/>';
+  });
+  svg.setAttribute("viewBox","0 0 "+W+" "+H); svg.innerHTML=g;
+  svg.querySelectorAll("rect[data-m]").forEach(r=>{
+    r.onmousemove=e=>show(e,"<b>"+r.dataset.m+"</b><br>Us: <b>"+r.dataset.o+"</b><br>Competitors: <b>"+r.dataset.c+"</b>");
+    r.onmouseleave=hide;
+  });
+}
+
+function cadence(){
+  const svg=$("#cadence"), W=svg.clientWidth||560;
+  const by={};
+  S.content.forEach(r=>{ if(!r.published_at||days(r.published_at)>90) return;
+    if(!by[r.org]) by[r.org]={n:0,own:r.is_own}; by[r.org].n++; });
+  S.content.forEach(r=>{ if(!by[r.org]) by[r.org]={n:0,own:r.is_own}; });
+  const rows=Object.entries(by).map(([o,v])=>({org:o,n:v.n,own:v.own}))
+    .sort((a,b)=>b.n-a.n||a.org.localeCompare(b.org)).slice(0,12);
+  if(!rows.length){ svg.innerHTML=""; return; }
+  const bh=16, gap=8, P={t:6,r:34,b:6,l:120};
+  const H=P.t+P.b+rows.length*(bh+gap)-gap;
+  const max=Math.max(1,...rows.map(r=>r.n)), iw=W-P.l-P.r;
+  let g="";
+  rows.forEach((r,i)=>{
+    const yy=P.t+i*(bh+gap), w=Math.max(2,(r.n/max)*iw);
+    g+='<text class="axis" x="'+(P.l-10)+'" y="'+(yy+bh-4)+'" text-anchor="end" '
+      +(r.own?'style="fill:var(--text-primary);font-weight:600"':'')+'>'+esc(r.org)+'</text>';
+    g+='<rect x="'+P.l+'" y="'+yy+'" width="'+w+'" height="'+bh+'" rx="4" '
+      +'fill="'+(r.own?"var(--series-1)":"var(--series-2)")+'" '
+      +(r.own?'':'opacity="0.72" ')+'data-o="'+esc(r.org)+'" data-n="'+r.n+'"/>';
+    g+='<text class="axis" x="'+(P.l+w+7)+'" y="'+(yy+bh-4)+'">'+r.n+'</text>';
+  });
+  svg.setAttribute("height",H); svg.setAttribute("viewBox","0 0 "+W+" "+H); svg.innerHTML=g;
+  svg.querySelectorAll("rect[data-o]").forEach(r=>{
+    r.onmousemove=e=>show(e,"<b>"+r.dataset.o+"</b><br><b>"+r.dataset.n+"</b> posts in 90 days");
+    r.onmouseleave=hide;
+  });
+}
+
+function show(e,html){ tt.innerHTML=html; tt.style.opacity=1;
+  tt.style.left=Math.min(e.clientX+14, innerWidth-tt.offsetWidth-10)+"px";
+  tt.style.top=(e.clientY-10)+"px"; }
+function hide(){ tt.style.opacity=0; }
+
+const sortState={content:{k:"published_at",d:-1},leads:{k:"name",d:1},demos:{k:"requested_at",d:-1}};
+function sortRows(rows,st){
+  return rows.slice().sort((a,b)=>{
+    let x=a[st.k], y=b[st.k];
+    if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1;
+    if(typeof x==="string") return st.d*x.localeCompare(y);
+    return st.d*(x<y?-1:x>y?1:0);
+  });
+}
+function markSort(table,st){
+  table.querySelectorAll("th").forEach(th=>{
+    const on=th.dataset.k===st.k; th.classList.toggle("sorted",on);
+    th.querySelector(".ar").innerHTML = on ? (st.d===1?"&#9650;":"&#9660;") : "&#9660;";
+  });
+}
+function wireSort(sel,key,rerender){
+  document.querySelectorAll(sel+" th").forEach(th=>th.onclick=()=>{
+    const st=sortState[key];
+    if(st.k===th.dataset.k) st.d*=-1; else { st.k=th.dataset.k; st.d = th.dataset.k==="published_at"||th.dataset.k==="requested_at"||th.dataset.k==="last_touch_at" ? -1 : 1; }
+    rerender();
+  });
+}
+
+function contentTable(){
+  const sel=$("#fOrg"), cur=sel.value;
+  const orgs=[...new Set(S.content.map(r=>r.org))].sort();
+  sel.innerHTML='<option value="">All publishers</option>'+orgs.map(o=>'<option>'+esc(o)+'</option>').join("");
+  sel.value=cur;
+  const q=$("#q").value.trim().toLowerCase(), side=$("#fSide").value, win=+$("#fWin").value;
+  let rows=S.content.filter(r=>
+    (!cur||r.org===cur) &&
+    (!side||(side==="own")===!!r.is_own) &&
+    (!win||(r.published_at&&days(r.published_at)<=win)) &&
+    (!q||(r.title||"").toLowerCase().includes(q)||(r.topic||"").toLowerCase().includes(q))
+  );
+  rows=sortRows(rows,sortState.content);
+  markSort($("#tContent"),sortState.content);
+  $("#cCount").textContent=rows.length+" of "+S.content.length+" items";
+  $("#tContent tbody").innerHTML = rows.length ? rows.map(r=>
+    '<tr><td class="nowrap">'+(r.published_at||'<span class="muted">no date</span>')+'</td>'
+    +'<td><span class="pill'+(r.is_own?" own":"")+'">'+esc(r.org)+'</span></td>'
+    +'<td><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.title)+'</a></td>'
+    +'<td class="muted">'+esc(r.topic||"")+'</td></tr>').join("")
+    : '<tr><td colspan="4" class="empty">Nothing matches those filters.</td></tr>';
+}
+
+function board(){
+  const cols=["new","contacted","replied","demo_booked","demo_done","won"];
+  $("#board").innerHTML = cols.map(c=>{
+    const items=S.leads.filter(l=>l.status===c);
+    return '<div class="col"><h3>'+LABEL[c]+'<b>'+items.length+'</b></h3>'
+      + (items.length ? items.slice(0,8).map(l=>
+          '<div class="lead"><div class="n">'+esc(l.name)+'</div>'
+          +'<div class="c">'+esc(l.company||"")+'</div>'
+          +'<select data-id="'+l.id+'">'+LEAD_STATUSES.map(s=>
+              '<option value="'+s+'"'+(s===l.status?" selected":"")+'>'+LABEL[s]+'</option>').join("")
+          +'</select></div>').join("")
+        + (items.length>8?'<div class="muted" style="font-size:12px">+'+(items.length-8)+' more</div>':"")
+        : '<div class="muted" style="font-size:12px">&mdash;</div>')
+      +'</div>';
+  }).join("");
+  $("#board").querySelectorAll("select[data-id]").forEach(s=>s.onchange=async()=>{
+    const id=s.dataset.id, v=s.value; s.disabled=true;
+    try{
+      await api("leads?id=eq."+id, {method:"PATCH", body:JSON.stringify({status:v, last_touch_at:new Date().toISOString().slice(0,10)})});
+      const l=S.leads.find(x=>String(x.id)===String(id)); if(l){ l.status=v; l.last_touch_at=new Date().toISOString().slice(0,10); }
+      tiles(); board(); leadsTable();
+    }catch(e){ alert("Could not save: "+e.message); s.disabled=false; }
+  });
+}
+
+function leadsTable(){
+  const q=$("#lq").value.trim().toLowerCase();
+  let rows=S.leads.filter(r=>!q||[r.name,r.company,r.title,r.segment].some(v=>(v||"").toLowerCase().includes(q)));
+  rows=sortRows(rows,sortState.leads);
+  markSort($("#tLeads"),sortState.leads);
+  $("#lCount").textContent=rows.length+" of "+S.leads.length+" leads";
+  $("#tLeads tbody").innerHTML = rows.length ? rows.map(r=>
+    '<tr><td><b>'+esc(r.name)+'</b></td><td class="muted">'+esc(r.title||"")+'</td>'
+    +'<td>'+esc(r.company||"")+'</td><td class="muted">'+esc(r.segment||"")+'</td>'
+    +'<td><span class="pill">'+esc(LABEL[r.status]||r.status)+'</span></td>'
+    +'<td class="nowrap">'+esc(r.last_touch_at||"")+'</td></tr>').join("")
+    : '<tr><td colspan="6" class="empty">No leads yet. Add them and they show up here and on the board above.</td></tr>';
+}
+
+function demosTable(){
+  let rows=sortRows(S.demos,sortState.demos);
+  markSort($("#tDemos"),sortState.demos);
+  $("#dCount").textContent=rows.length+" demo / signup records";
+  $("#tDemos tbody").innerHTML = rows.length ? rows.map(r=>
+    '<tr><td class="nowrap">'+esc(r.requested_at||"")+'</td><td><b>'+esc(r.contact_name||"")+'</b></td>'
+    +'<td>'+esc(r.company||"")+'</td><td class="muted">'+esc(r.kind)+'</td>'
+    +'<td class="muted">'+esc(r.channel||"")+'</td>'
+    +'<td><span class="pill">'+esc(r.status)+'</span></td></tr>').join("")
+    : '<tr><td colspan="6" class="empty">No demos logged yet.</td></tr>';
+}
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+  ["content","leads","demos"].forEach(p=>$("#pane-"+p).hidden = p!==t.dataset.tab);
+});
+["#q","#fOrg","#fSide","#fWin"].forEach(s=>$(s).addEventListener("input",contentTable));
+$("#lq").addEventListener("input",leadsTable);
+wireSort("#tContent","content",contentTable);
+wireSort("#tLeads","leads",leadsTable);
+wireSort("#tDemos","demos",demosTable);
+$("#reload").onclick=load;
+$("#theme").onclick=()=>{
+  const d=document.documentElement.getAttribute("data-theme")==="dark";
+  document.documentElement.setAttribute("data-theme", d?"light":"dark");
+  $("#theme").textContent = d?"Dark":"Light";
+  trend(); cadence();
+};
+addEventListener("resize",()=>{ trend(); cadence(); });
+load();
+</script>
+</body>
+</html>
